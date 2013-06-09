@@ -11,13 +11,12 @@ Loads pages asynchronously.
 
 INSTALLATION
 --------------------------------------------------------------------------
-1. Extract plugin archive
-2. Copy "asyncdocs" folder from extracted archive to [modxDir]/assets/plugins/ directory
-3. Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of plugin.txt
+1. Extract plugin archive to the root of your MODx site
+3. Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of assets/plugins/AsyncDocs/plugin.txt
 into the code field.
 4. Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
 5. Copy/paste to the config field on the Config tab:
-    &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &chunks=Additional chunks(list of chunks to add to the response separated by "||") <b>not tested, currently disabled</b>;textarea; &snippets=Additional snippets(list of snippets to add to the response separated by "||") <b>not realized in this version</b>;textarea; &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea &excludeSnippets=Exclude snippets(list of snippets to exclude from document content separated by "||") <b>not realized in this version</b>;textarea;
+    &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
 6. Set needed plugin options:
     &contentSelector - XPath to the content DOM element
     &fields - Document fields(list of doc fields to add to the response separated by "||")
