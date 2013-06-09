@@ -26,9 +26,9 @@ into the code field.
 
 - Set needed plugin options
 
-    &contentSelector - XPath to the content DOM element
-    &fields - Document fields(list of doc fields to add to the response separated by "||")
-    &excludeChunks - Exclude chunks(list of chunks to exclude from document content separated by "||")
+    - &contentSelector - XPath to the content DOM element
+    - &fields - Document fields(list of doc fields to add to the response separated by "||")
+    - &excludeChunks - Exclude chunks(list of chunks to exclude from document content separated by "||")
 
 
 USAGE
