@@ -2,7 +2,6 @@ AsyncDocs plugin documentation
 
 Author: Vladimir Vershinin
 License: http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
-Copyright: 2013, Vladimir Vershinin
 ============================================================================
 
 The plugin to ajaxify MODx site.
