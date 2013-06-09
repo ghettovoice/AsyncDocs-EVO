@@ -15,9 +15,9 @@ INSTALLATION
 - Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of assets/plugins/AsyncDocs/plugin.txt
 into the code field.
 - Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
-- Copy/paste to the config field on the Config tab:
+- Copy/paste to the config field on the Config tab
     &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
-- Set needed plugin options:
+- Set needed plugin options
     &contentSelector - XPath to the content DOM element
     &fields - Document fields(list of doc fields to add to the response separated by "||")
     &excludeChunks - Exclude chunks(list of chunks to exclude from document content separated by "||")
