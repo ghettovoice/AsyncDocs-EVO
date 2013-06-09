@@ -1,6 +1,6 @@
 AsyncDocs plugin documentation
 
-Author: Vladimir Vershinin<br />
+Author: Vladimir Vershinin
 License: http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
 
 ============================================================================
@@ -16,23 +16,29 @@ INSTALLATION
 into the code field.
 4. Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
 5. Copy/paste to the config field on the Config tab:
-    &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
+    <code>&Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea</code>
 6. Set needed plugin options:
+    <code>
     &contentSelector - XPath to the content DOM element
     &fields - Document fields(list of doc fields to add to the response separated by "||")
     &excludeChunks - Exclude chunks(list of chunks to exclude from document content separated by "||")
+    </code>
 
 
 USAGE
 --------------------------------------------------------------------------
 As a general rule for asynchronous navigating pages need only change the page's content.
 Plugin allows to do this in 2 ways:
+
 1. Move the immutable part of a pattern in chunks and list these chunks in &excludeChunks option.
+
 2. Set the XPath to the content DOM element. This element will be extracted from document output.
 
 To get page via ajax make an ajax request to url of the page that you need. One field
 in request data is necessary: "AsyncDocs".
+
 The plugin returns a json object:
+<code>
 {
     content: string,                // document output
     dir: string,                    // document tree direction, "up"(up the documents tree) or "down"(down the document tree)
@@ -47,12 +53,14 @@ The plugin returns a json object:
     status: int,                    // HTTP status of response; 200 - OK, 404 - not found, 301 - moved for references
     treePath: []                    // array of ids from root as '0' to current document id
 }
+</code>
 
 Plugins that invoked on "OnPageUnauthorized" and "OnPageNotFound" events
 must return id of document to load forward. In this events use $asyncDocs->isAjax() to
 determine that this is ajax page request.
 
 Example:
+<code>
 // some code here that determine id of the landing document and setting $_REQUEST vars
 
 // landingDocId is defined and this is ajax request than return
@@ -64,6 +72,6 @@ if ($landingDocId && $asyncDocs->isAjax()) {
 elseif ($landingDocId) {
     $modx->sendForward($landingDocId);
 }
-
+</code>
 
 
