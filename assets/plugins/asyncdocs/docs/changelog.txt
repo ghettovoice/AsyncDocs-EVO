@@ -1,0 +1,12 @@
+AsyncDocs plugin change log
+
+Author: Vershinin Vladimir
+=============================================================================
+
+1.0.0
+----------------------------------------------------------------------------
+Features:
+    * Excludes chunks from document output
+    * Adds tree direction and tree path of the document in document's tree for different js animations
+    * Custom cache system to cache prepared document content and object
+    * Handles deleted, unpublished documents and documents as reference

@@ -1,0 +1,1 @@
+include $modx->config['base_path'] . 'assets/plugins/asyncdocs/asyncdocs.plugin.php';
