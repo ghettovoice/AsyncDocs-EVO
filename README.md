@@ -1,23 +1,31 @@
 AsyncDocs plugin documentation
 
 Author: Vladimir Vershinin
+
 License: http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
 
 ============================================================================
 
 The plugin to ajaxify MODx site.
+
 Loads pages asynchronously.
 
 
 INSTALLATION
 --------------------------------------------------------------------------
 - Extract plugin archive to the root of your MODx site
+
 - Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of assets/plugins/AsyncDocs/plugin.txt
 into the code field.
+
 - Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
+
 - Copy/paste to the config field on the Config tab
+
     &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
+
 - Set needed plugin options
+
     &contentSelector - XPath to the content DOM element
     &fields - Document fields(list of doc fields to add to the response separated by "||")
     &excludeChunks - Exclude chunks(list of chunks to exclude from document content separated by "||")
@@ -36,6 +44,7 @@ To get page via ajax make an ajax request to url of the page that you need. One 
 in request data is necessary: "AsyncDocs".
 
 The plugin returns a json object:
+
     {
         content: string,                // document output
         dir: string,                    // document tree direction, "up"(up the documents tree) or "down"(down the document tree)
@@ -56,6 +65,7 @@ must return id of document to load forward. In this events use $asyncDocs->isAja
 determine that this is ajax page request.
 
 Example:
+
     // some code here that determine id of the landing document and setting $_REQUEST vars
 
     // landingDocId is defined and this is ajax request than return
