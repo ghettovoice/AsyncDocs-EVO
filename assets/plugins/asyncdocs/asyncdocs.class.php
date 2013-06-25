@@ -125,7 +125,7 @@ class AsyncDocs {
             header("Expires: 0");
             header("Cache-Control: no-cache, must-revalidate, post-check=0, pre-check=0");
             header("Pragma: no-cache");
-            header('Content-type: application/json');
+            header('Content-type: application/json; charset=utf-8');
 
             // load document
             $loaded = $this->loadDocument();
