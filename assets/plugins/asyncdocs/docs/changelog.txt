@@ -1,6 +1,6 @@
 AsyncDocs plugin change log
 
-Author: Vershinin Vladimir
+Author: Vladimir Vershinin
 =============================================================================
 
 1.0.0
