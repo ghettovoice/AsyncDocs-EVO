@@ -6,7 +6,7 @@
  * Asynchronously loads the documents.
  *
  * @author Vladimir Vershinin
- * @version 1.0.0
+ * @version 1.0.1
  * @package AsyncDocs
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
