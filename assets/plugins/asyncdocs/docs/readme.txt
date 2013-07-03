@@ -3,6 +3,7 @@ AsyncDocs plugin documentation
 Author: Vladimir Vershinin
 License: http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
 Copyright: 2013, Vladimir Vershinin
+Github: https://github.com/ghettovoice/AsyncDocs
 ============================================================================
 
 The plugin to ajaxify MODx site.
@@ -12,12 +13,12 @@ Loads pages asynchronously.
 INSTALLATION
 --------------------------------------------------------------------------
 1. Extract plugin archive to the root of your MODx site
-3. Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of assets/plugins/AsyncDocs/plugin.txt
+2. Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of plugin.txt
 into the code field.
-4. Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
-5. Copy/paste to the config field on the Config tab:
-    &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
-6. Set needed plugin options:
+3. Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
+4. Copy/paste to the config field on the Config tab:
+    &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
+5. Set needed plugin options:
     &contentSelector - XPath to the content DOM element
     &fields - Document fields(list of doc fields to add to the response separated by "||")
     &excludeChunks - Exclude chunks(list of chunks to exclude from document content separated by "||")
@@ -27,11 +28,25 @@ USAGE
 --------------------------------------------------------------------------
 As a general rule for asynchronous navigating pages need only change the page's content.
 Plugin allows to do this in 2 ways:
-1. Move the immutable part of a pattern in chunks and list these chunks in &excludeChunks option.
+1. Move the immutable part of a template in chunks (e. g: header and footer) and list these chunks in &excludeChunks option.
 2. Set the XPath to the content DOM element. This element will be extracted from document output.
 
 To get page via ajax make an ajax request to url of the page that you need. One field
-in request data is necessary: "AsyncDocs".
+in request data is necessary: "AsyncDocs" or "asyncdocs".
+
+Example request:
+$.ajax({
+    url: pageUrl,
+    dataType: 'json',
+    data: {
+        asyncdocs: 1
+    },
+    success: function(response) {
+        // process response, change page content
+    }
+});
+
+
 The plugin returns a json object:
 {
     content: string,                // document output

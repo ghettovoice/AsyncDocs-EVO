@@ -6,7 +6,7 @@
  * Main class of AsyncDocs plugin.
  *
  * @author Vladimir Vershinin
- * @version 1.0.0
+ * @version 1.0.1
  * @package AsyncDocs
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
@@ -114,7 +114,7 @@ class AsyncDocs {
      * @return boolean
      */
     public function isAjax() {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' && isset($_REQUEST[self::PLG_NAME]);
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' && (isset($_REQUEST[self::PLG_NAME]) || isset($_REQUEST[strtolower(self::PLG_NAME)]));
     }
 
     /**
@@ -232,6 +232,7 @@ class AsyncDocs {
         $this->response['fields'] = array();
 
         $fields = $this->getOption('fields', array());
+
         foreach ($fields as $field) {
             if (array_key_exists($field, $this->modx->documentObject)) {
                 $value = $this->modx->documentObject[$field];
@@ -541,7 +542,7 @@ class AsyncDocs {
 
         return $files;
     }
-     
+
 
     /**
      * @return array Response array
