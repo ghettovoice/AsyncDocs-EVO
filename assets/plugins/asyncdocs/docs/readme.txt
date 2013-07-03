@@ -18,7 +18,7 @@ INSTALLATION
 into the code field.
 4. Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
 5. Copy/paste to the config field on the Config tab:
-    &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &chunks=Additional chunks(list of chunks to add to the response separated by "||") <b>not tested, currently disabled</b>;textarea; &snippets=Additional snippets(list of snippets to add to the response separated by "||") <b>not realized in this version</b>;textarea; &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea &excludeSnippets=Exclude snippets(list of snippets to exclude from document content separated by "||") <b>not realized in this version</b>;textarea;
+    &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
 6. Set needed plugin options:
     &contentSelector - XPath to the content DOM element
     &fields - Document fields(list of doc fields to add to the response separated by "||")
@@ -33,7 +33,21 @@ Plugin allows to do this in 2 ways:
 2. Set the XPath to the content DOM element. This element will be extracted from document output.
 
 To get page via ajax make an ajax request to url of the page that you need. One field
-in request data is necessary: "AsyncDocs".
+in request data is necessary: "AsyncDocs" or "asyncdocs".
+
+Example request:
+$.ajax({
+    url: pageUrl,
+    dataType: 'json',
+    data: {
+        asyncdocs: 1
+    },
+    success: function(response) {
+        // process response, change page content
+    }
+});
+
+
 The plugin returns a json object:
 {
     content: string,                // document output
