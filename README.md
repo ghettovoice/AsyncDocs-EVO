@@ -2,6 +2,8 @@ AsyncDocs plugin documentation
 
 Author: Vladimir Vershinin
 
+Copyright: 2013, Vladimir Vershinin
+
 License: http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
 
 ============================================================================
@@ -22,7 +24,7 @@ into the code field.
 
 - Copy/paste to the config field on the Config tab
 
-    &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
+    &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea
 
 - Set needed plugin options
 
@@ -41,7 +43,21 @@ Plugin allows to do this in 2 ways:
 - Set the XPath to the content DOM element. This element will be extracted from document output.
 
 To get page via ajax make an ajax request to url of the page that you need. One field
-in request data is necessary: "AsyncDocs".
+in request data is necessary: "AsyncDocs" or "asyncdocs".
+
+Example request:
+
+    $.ajax({
+        url: pageUrl,
+        dataType: 'json',
+        data: {
+            asyncdocs: 1
+        },
+        success: function(response) {
+            // process response, change page content
+        }
+    });
+
 
 The plugin returns a json object:
 
