@@ -5,6 +5,10 @@ Author: Vladimir Vershinin
 
 1.0.1
 -----------------------------------------------------------------------------
+Features:
+    * Add &chunks option
+    * Add document url to response and &urlScheme option, &contentOnly option and &cache option
+    * Add namespace for environment variables
 Fix:
     * Now plugin accept lower string "asyncdocs"
 

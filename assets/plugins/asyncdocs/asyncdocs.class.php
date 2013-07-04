@@ -11,11 +11,17 @@
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
  */
+
+/**
+ * @todo добавить в ответ урл документа, параметр на схему урла
+ * @todo передача параметра для голого контента
+ */
 class AsyncDocs {
 
     const PLG_NAME                 = 'AsyncDocs';
     const VERSION                  = '1.0.0-beta';
-    const DOC_CACHE_SUFF           = 'doc_';
+    const DOC_CACHE_PREFIX         = 'doc_';
+    const CHUNK_CACHE_PREFIX       = 'chunk_';
     // statuses
     const STATUS_OK                = 200;
     const STATUS_MOVED_PERMANENTLY = 301;
@@ -39,16 +45,21 @@ class AsyncDocs {
 
     /** @var int $status Response status */
     protected $status;
+    protected $namespace;
 
     public function __construct(DocumentParser &$modx, array $config = array()) {
-        $this->modx   = & $modx;
-        $this->config = array_merge(array(
+        $this->modx      = & $modx;
+        $this->namespace = strtolower(self::PLG_NAME);
+        $this->config    = array_merge(array(
             'contentSelector' => '',
             'fields'          => '',
             'chunks'          => '',
             'snippets'        => '',
             'excludeChunks'   => '',
             'excludeSnippets' => '',
+            'urlScheme'       => '',
+            'contentOnly'     => false,
+            'cache'           => true,
             'cacheDir'        => $this->modx->config['base_path'] . 'assets/cache/.asyncdocs/',
                 ), $config);
 
@@ -71,6 +82,10 @@ class AsyncDocs {
         array_walk($this->config['fields'], "trim");
         array_walk($this->config ['excludeChunks'], "trim");
         array_walk($this->config['excludeSnippets'], "trim");
+
+        // options from  request
+        $this->config['contentOnly'] = isset($_REQUEST[$this->namespace . '_contentonly']) ? filter_var($_REQUEST[$this->namespace . '_contentonly'], FILTER_VALIDATE_BOOLEAN) : $this->config['contentOnly'];
+        $this->config['cache']       = isset($_REQUEST[$this->namespace . '_cache']) ? filter_var($_REQUEST[$this->namespace . '_cache'], FILTER_VALIDATE_BOOLEAN) : $this->config['cache'];
 
         return $this;
     }
@@ -114,7 +129,7 @@ class AsyncDocs {
      * @return boolean
      */
     public function isAjax() {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' && (isset($_REQUEST[self::PLG_NAME]) || isset($_REQUEST[strtolower(self::PLG_NAME)]));
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' && (isset($_REQUEST[self::PLG_NAME]) || isset($_REQUEST[$this->namespace]));
     }
 
     /**
@@ -158,12 +173,19 @@ class AsyncDocs {
      * @return \AsyncDocs
      */
     private function _setSessionVars() {
-        $_SESSION[self::PLG_NAME . '_prevId']  = $this->modx->documentIdentifier;
-        $_SESSION[self::PLG_NAME . '_prevIdx'] = (int) $this->modx->documentObject['menuindex'];
+        $_SESSION[$this->namespace . '_prevId']  = $this->modx->documentIdentifier;
+        $_SESSION[$this->namespace . '_prevIdx'] = (int) $this->modx->documentObject['menuindex'];
 
-        $parents                               = $this->modx->getParentIds($this->modx->documentIdentifier);
-        $_SESSION[self::PLG_NAME . '_prevLvl'] = count($parents) + 1;
+        $parents                                 = $this->modx->getParentIds($this->modx->documentIdentifier);
+        $_SESSION[$this->namespace . '_prevLvl'] = count($parents) + 1;
+        $_SESSION[$this->namespace . '_prevUrl'] = $this->getDocUrl($this->modx->documentIdentifier);
         return $this;
+    }
+
+    public function getDocUrl($id) {
+        $id     = (int) $id;
+        $scheme = $this->getOption('urlScheme', '');
+        return $id === (int) $this->modx->config['site_start'] ? ($scheme ? $this->modx->config['site_url'] : $this->modx->config['base_url']) : $this->modx->makeUrl($id, '', '', $scheme);
     }
 
     /**
@@ -179,9 +201,11 @@ class AsyncDocs {
         $this->response['fromCache'] = !$this->modx->documentGenerated;
         $this->response['id']        = (int) $this->modx->documentIdentifier;
         $this->response['idx']       = (int) $this->modx->documentObject['menuindex'];
-        $this->response['prevId']    = !empty($_SESSION[self::PLG_NAME . '_prevId']) && $_SESSION[self::PLG_NAME . '_prevId'] !== $this->modx->documentIdentifier ? (int) $_SESSION[self::PLG_NAME . '_prevId'] : 1;
-        $this->response['prevLvl']   = !empty($_SESSION[self::PLG_NAME . '_prevLvl']) ? (int) $_SESSION[self::PLG_NAME . '_prevLvl'] : 1;
-        $this->response['prevIdx']   = !empty($_SESSION[self::PLG_NAME . '_prevIdx']) ? (int) $_SESSION[self::PLG_NAME . '_prevIdx'] : 0;
+        $this->response['url']       = $this->getDocUrl($this->modx->documentIdentifier);
+        $this->response['prevId']    = !empty($_SESSION[$this->namespace . '_prevId']) && $_SESSION[$this->namespace . '_prevId'] !== $this->modx->documentIdentifier ? (int) $_SESSION[$this->namespace . '_prevId'] : 1;
+        $this->response['prevLvl']   = !empty($_SESSION[$this->namespace . '_prevLvl']) ? (int) $_SESSION[$this->namespace . '_prevLvl'] : 1;
+        $this->response['prevIdx']   = !empty($_SESSION[$this->namespace . '_prevIdx']) ? (int) $_SESSION[$this->namespace . '_prevIdx'] : 0;
+        $this->response['prevUrl']   = !empty($_SESSION[$this->namespace . '_prevUrl']) ? $_SESSION[$this->namespace . '_prevUrl'] : '';
 
         if ($this->response['prevId']) { // add tree direction and tree path
             $parents     = array_reverse(array_values($parents));
@@ -262,45 +286,50 @@ class AsyncDocs {
      * Add chunks to response
      *
      * @return \AsyncDocs
-     * @todo not tested
      */
     public function addChunks() {
-//        $this->response['chunks'] = array();
+        $this->response['chunks'] = array();
+        $chunks                   = $this->getOption('chunks', array());
+        foreach ($chunks as $chunkStr) {
+            if (empty($chunkStr))
+                continue;
 
-//        $chunks = $this->getOption('chunks', array());
-//        foreach ($chunks as $chunkStr) {
-//            if (empty($chunkStr))
-//                continue;
-//
-//            $parts     = explode(',', $chunkStr);
-//            $chunkName = array_shift($parts);
-//
-//            $chunkParams = array();
-//            $cache       = false;
-//
-//            foreach ($parts as $p) {
-//                $propArr = explode('=', $p);
-//
-//                if ($propArr) {
-//                    if ($propArr[0] === 'cache') {
-//                        $cache = filter_var($propArr[1], FILTER_VALIDATE_BOOLEAN);
-//                    } else {
-//                        $chunkParams[$propArr[0]] = !empty($propArr[1]) ? $propArr[1] : '';
-//                    }
-//                }
-//            }
-//
-//
-//            if (empty($this->chunks[$chunkName]) || empty($this->chunks[$chunkName]['content']) || !$cache) {
-//                $this->chunks[$chunkName] = array(
-//                    'content' => $this->modx->parseChunk($chunkName, $chunkParams, '[+', '+]'),
-//                    'cache'   => $cache,
-//                    'params'  => $chunkParams,
-//                );
-//            }
-//
-//            $this->response['chunks'][$chunkName] = $this->chunks[$chunkName]['content'];
-//        }
+            $parts       = explode(':', $chunkStr);
+            array_walk($parts, "trim");
+            $chunkName   = array_shift($parts);
+            $chunkParams = array();
+            $cache       = true;
+
+            foreach ($parts as $p) {
+                $propArr = explode('~', $p);
+                if ($propArr) {
+                    $prop = trim($propArr[0]);
+                    $val = isset($propArr[1]) ? trim($propArr[1]) : '';
+
+                    if ($prop === 'cache') {
+                        $cache = filter_var($val, FILTER_VALIDATE_BOOLEAN);
+                    } else {
+                        $chunkParams[$prop] = $val;
+                    }
+                }
+            }
+
+            if ($cache)
+                $this->chunks[$chunkName] = $this->getCache($chunkName, self::CHUNK_CACHE_PREFIX);
+
+            if (empty($this->chunks[$chunkName]) || empty($this->chunks[$chunkName]['content'])) {
+                $this->chunks[$chunkName] = array(
+                    'content' => $this->modx->parseChunk($chunkName, $chunkParams, '[+', '+]'),
+                    'cache'   => $cache,
+                    'params'  => $chunkParams,
+                );
+            }
+
+            $this->response['chunks'][$chunkName] = $this->chunks[$chunkName]['content'];
+
+            if ($cache && $this->chunks[$chunkName]['content'])
+                $this->setCache($chunkName, $this->chunks[$chunkName], self::CHUNK_CACHE_PREFIX);
+        }
 
         return $this;
     }
@@ -455,7 +484,7 @@ class AsyncDocs {
         $snippets = $this->getOption('excludeSnippets', array());
 
         if (!empty($snippets)) {
-
+            
         }
         return $this;
     }
@@ -469,7 +498,7 @@ class AsyncDocs {
      * @return \AsyncDocs
      */
     public function setCache($key, $value, $prefix = '') {
-        $file = $this->getOption('cacheDir') . $prefix . $key . '.cache.php';
+        $file         = $this->getOption('cacheDir') . $prefix . $key . '.cache.php';
         $cacheContent = serialize($value);
         $parts        = pathinfo($file);
         $canSave      = true;
@@ -543,7 +572,6 @@ class AsyncDocs {
         return $files;
     }
 
-
     /**
      * @return array Response array
      */
@@ -557,7 +585,7 @@ class AsyncDocs {
      * @return \AsyncDocs
      */
     public function parseDocumentContent() {
-        if (!$this->modx->documentObject['template'])
+        if (!$this->modx->documentObject['template'] || $this->getOption('contentOnly', false))
             $documentContent = "[*content*]"; // use blank template
         else {
             $sql = "SELECT `content` FROM " . $this->modx->getFullTableName("site_templates") . " WHERE "
@@ -686,7 +714,7 @@ class AsyncDocs {
      * @return boolean Return true if load succussed
      */
     public function loadDocumentCache() {
-        if ($docObj = $this->getCache($this->modx->documentIdentifier, self::DOC_CACHE_SUFF)) {
+        if ($this->getOption('cache', true) && $docObj = $this->getCache($this->modx->documentIdentifier, self::DOC_CACHE_PREFIX)) {
             $this->modx->documentGenerated = 0;
 
             // check page security
@@ -723,25 +751,6 @@ class AsyncDocs {
 
             $this->modx->documentContent = $docObj['__MODxParsedContent__'];
 
-            // process cached chunks
-            if (!empty($docObj['__MODxChunks__'])) {
-                foreach ($docObj['__MODxChunks__'] as $chunkName => $params) {
-                    $this->chunks[$chunkName] = $params;
-                }
-
-                unset($docObj['__MODxChunks__']);
-            }
-
-            // process cached snippets
-            if (!empty($docObj['__MODxSnippets__'])) {
-
-                foreach ($docObj['__MODxSnippets__'] as $snippetName => $params) {
-                    $this->snippets[$snippetName] = $params;
-                }
-
-                unset($docObj['__MODxSnippets__']);
-            }
-
             unset($docObj['__MODxParsedContent__'], $docObj['__MODxDocGroups__']);
             $this->modx->documentObject = $docObj;
         } else {
@@ -757,7 +766,7 @@ class AsyncDocs {
      * @return \AsyncDocs
      */
     public function saveDocumentCache() {
-        if ($this->modx->documentObject['cacheable'] == 1 && $this->modx->documentGenerated === 1 && $this->modx->documentObject['type'] == 'document' && $this->modx->documentObject['published'] == 1) {
+        if ($this->modx->documentObject['cacheable'] == 1 && $this->modx->documentGenerated === 1 && $this->modx->documentObject['type'] == 'document' && $this->modx->documentObject['published'] == 1 && $this->getOption('cache', true)) {
             $this->modx->documentObject['__MODxParsedContent__'] = $this->modx->documentContent;
 
             // get and store document groups inside document object. Document groups will be used to check security on cache pages
@@ -767,19 +776,7 @@ class AsyncDocs {
             if (is_array($docGroups))
                 $this->modx->documentObject['__MODxDocGroups__'] = implode(",", $docGroups);
 
-
-            // add chunks that must be cached
-            $chunks = array();
-            foreach ($this->chunks as $chunkName => $params) {
-                if ($params['cache'])
-                    $chunks[$chunkName] = $params;
-            }
-
-            if ($chunks)
-                $this->modx->documentObject['__MODxChunks__'] = $chunks;
-
-
-            $this->setCache($this->modx->documentIdentifier, $this->modx->documentObject, self::DOC_CACHE_SUFF);
+            $this->setCache($this->modx->documentIdentifier, $this->modx->documentObject, self::DOC_CACHE_PREFIX);
         }
         return $this;
     }

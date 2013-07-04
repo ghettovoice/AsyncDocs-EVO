@@ -17,7 +17,7 @@
  *   OnCacheUpdate - clear cache of documents
  *
  * Configuration:
-  &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields(list of doc fields to add to the response separated by "||");textarea;pagetitle||longtitle||description &chunks=Additional chunks(list of chunks to add to the response separated by "||") <b>not tested, currently disabled</b>;textarea; &snippets=Additional snippets(list of snippets to add to the response separated by "||") <b>not realized in this version</b>;textarea; &excludeChunks=Exclude chunks(list of chunks to exclude from document content separated by "||");textarea &excludeSnippets=Exclude snippets(list of snippets to exclude from document content separated by "||") <b>not realized in this version</b>;textarea;
+  &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks;textarea; &urlScheme=Document URL scheme;string; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache:list;true,false;true
  */
 /* @var $modx DocumentParser */
 /* @var $e SystemEvent */
@@ -33,6 +33,9 @@ $params['chunks']          = isset($chunks) ? $chunks : '';
 $params['snippets']        = isset($snippets) ? $snippets : '';
 $params['excludeChunks']   = isset($excludeChunks) ? $excludeChunks : '';
 $params['excludeSnippets'] = isset($excludeSnippets) ? $excludeSnippets : '';
+$params['urlScheme']       = isset($urlScheme) ? $urlScheme : '';
+$params['contentOnly']     = isset($contentOnly) ? filter_var($contentOnly, FILTER_VALIDATE_BOOLEAN) : false;
+$params['cache']           = isset($cache) ? filter_var($cache, FILTER_VALIDATE_BOOLEAN) : true;
 
 $asyncDocs = new AsyncDocs($modx, $params);
 
