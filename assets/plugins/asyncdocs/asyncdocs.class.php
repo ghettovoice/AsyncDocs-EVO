@@ -11,11 +11,6 @@
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
  */
-
-/**
- * @todo добавить в ответ урл документа, параметр на схему урла
- * @todo передача параметра для голого контента
- */
 class AsyncDocs {
 
     const PLG_NAME                 = 'AsyncDocs';
