@@ -11,11 +11,6 @@
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
  */
-
-/**
- * @todo добавить в ответ урл документа, параметр на схему урла
- * @todo передача параметра для голого контента
- */
 class AsyncDocs {
 
     const PLG_NAME                 = 'AsyncDocs';
@@ -304,7 +299,7 @@ class AsyncDocs {
                 $propArr = explode('~', $p);
                 if ($propArr) {
                     $prop = trim($propArr[0]);
-                    $val = isset($propArr[1]) ? trim($propArr[1]) : '';
+                    $val  = isset($propArr[1]) ? trim($propArr[1]) : '';
 
                     if ($prop === 'cache') {
                         $cache = filter_var($val, FILTER_VALIDATE_BOOLEAN);
