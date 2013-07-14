@@ -2,6 +2,15 @@ AsyncDocs plugin change log
 
 Author: Vladimir Vershinin
 =============================================================================
+1.1.0
+-----------------------------------------------------------------------------
+Features:
+    * Minify option, minifies output html
+    * Minifing hole page html
+    * Now plugin accept HTTP header 'X-AsyncDocs: AsyncDocs' instead of using request fields
+    * Process plugins for custom urls that invoked before onWebPageInit
+Fix:
+    * Readme examples
 
 1.0.1
 -----------------------------------------------------------------------------

@@ -6,7 +6,7 @@
  * Main class of AsyncDocs plugin.
  *
  * @author Vladimir Vershinin
- * @version 1.0.1
+ * @version 1.1.0
  * @package AsyncDocs
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
@@ -22,6 +22,7 @@ class AsyncDocs {
     const STATUS_MOVED_PERMANENTLY = 301;
     const STATUS_UNAUTHORIZED      = 401;
     const STATUS_NOT_FOUND         = 404;
+    const STATUS_INTERNAL_ERROR    = 500;
 
     /** @var DocumentParser $modx */
     public $modx;
@@ -37,6 +38,7 @@ class AsyncDocs {
 
     /** @var array $snippets Array of additional snippets */
     protected $snippets = array();
+    protected $statuses = array();
 
     /** @var int $status Response status */
     protected $status;
@@ -55,11 +57,29 @@ class AsyncDocs {
             'urlScheme'       => '',
             'contentOnly'     => false,
             'cache'           => true,
+            'minify'          => true,
             'cacheDir'        => $this->modx->config['base_path'] . 'assets/cache/.asyncdocs/',
                 ), $config);
 
         $this->_prepareConfig()
-                ->_prepareCacheDirectories();
+                ->_prepareCacheDirectories()
+                ->_prepareStatusCodes();
+    }
+
+    /**
+     * Sets status codes array
+     * 
+     * @return \AsyncDocs
+     */
+    private function _prepareStatusCodes() {
+        $this->statuses = array(
+            self::STATUS_OK                => 'HTTP/1.1 ' . self::STATUS_OK . ' OK',
+            self::STATUS_MOVED_PERMANENTLY => 'HTTP/1.1 ' . self::STATUS_MOVED_PERMANENTLY . ' Moved Permanently',
+            self::STATUS_UNAUTHORIZED      => 'HTTP/1.1 ' . self::STATUS_UNAUTHORIZED . ' Unauthorized',
+            self::STATUS_NOT_FOUND         => 'HTTP/1.1 ' . self::STATUS_NOT_FOUND . ' Not Found',
+            self::STATUS_INTERNAL_ERROR    => 'HTTP/1.1 ' . self::STATUS_INTERNAL_ERROR . ' Internal Server Error',
+        );
+        return $this;
     }
 
     /**
@@ -124,42 +144,60 @@ class AsyncDocs {
      * @return boolean
      */
     public function isAjax() {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' && (isset($_REQUEST[self::PLG_NAME]) || isset($_REQUEST[$this->namespace]));
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' && (isset($_REQUEST[self::PLG_NAME]) || isset($_REQUEST[$this->namespace]) || (!empty($_SERVER['HTTP_X_' . strtoupper(self::PLG_NAME)]) && strtolower($_SERVER['HTTP_X_' . strtoupper(self::PLG_NAME)]) === $this->namespace));
     }
 
     /**
-     * Enter method
+     * Main enter method
+     * 
+     * @return boolean Returns false if this is not ajax request
      */
     public function run() {
-        if ($this->isAjax()) {
-            header("Expires: 0");
-            header("Cache-Control: no-cache, must-revalidate, post-check=0, pre-check=0");
-            header("Pragma: no-cache");
-            header('Content-type: application/json; charset=utf-8');
-
-            // load document
-            $loaded = $this->loadDocument();
-
-            if ($loaded) {
-                // preprare response
-                $this->prepareDocumentOutput()
-                        ->addDocFields()
-                        ->addChunks()
-                        ->addSnippets()
-                        ->addServiceData();
-
-                $this->saveDocumentCache();
-
-                $this->modx->invokeEvent('OnWebPageComplete', array('asyncDocs' => $this));
-
-                $this->_setSessionVars();
-
-                echo json_encode($this->getResponse());
-                exit;
-            }
-        } else {
+        if (!$this->isAjax()) {
             $this->_setSessionVars();
+            return false;
         }
+
+        // load document
+        $this->loadDocument();
+        // preprare response
+        $this->prepareDocumentOutput()
+                ->addDocFields()
+                ->addChunks()
+                ->addSnippets()
+                ->addServiceData();
+
+        $this->saveDocumentCache();
+
+        $this->modx->invokeEvent('OnWebPageComplete', array('asyncDocs' => $this));
+
+        $this->_setSessionVars()
+                ->echoResponse();
+    }
+
+    /**
+     * Echo response to output
+     */
+    public function echoResponse() {
+        header("Expires: 0");
+        header("Cache-Control: no-cache, must-revalidate, post-check=0, pre-check=0");
+        header("Pragma: no-cache");
+        header('Content-type: application/json; charset=utf-8');
+
+        $this->_setResponseHeader();
+
+        echo json_encode($this->getResponse());
+        exit;
+    }
+
+    /**
+     * Sets HTTP header status code
+     * 
+     * @return \AsyncDocs
+     */
+    private function _setResponseHeader() {
+        header($this->statuses[$this->status]);
+        return $this;
     }
 
     /**
@@ -180,7 +218,8 @@ class AsyncDocs {
     public function getDocUrl($id) {
         $id     = (int) $id;
         $scheme = $this->getOption('urlScheme', '');
-        return $id === (int) $this->modx->config['site_start'] ? ($scheme ? $this->modx->config['site_url'] : $this->modx->config['base_url']) : $this->modx->makeUrl($id, '', '', $scheme);
+        $args   = http_build_query(array_diff_key($_GET, array_flip(array(self::PLG_NAME, $this->namespace, 'id', 'q'))));
+        return $id === (int) $this->modx->config['site_start'] ? ($scheme ? $this->modx->config['site_url'] : $this->modx->config['base_url']) : $this->modx->makeUrl($id, '', $args, $scheme);
     }
 
     /**
@@ -295,6 +334,10 @@ class AsyncDocs {
             $chunkParams = array();
             $cache       = true;
 
+            $chunkId = (int) $this->modx->db->getValue("SELECT `id` FROM {$this->modx->getFullTableName('site_htmlsnippets')} WHERE `name` LIKE '$chunkName'");
+            if (!$chunkId)
+                continue;
+
             foreach ($parts as $p) {
                 $propArr = explode('~', $p);
                 if ($propArr) {
@@ -310,20 +353,21 @@ class AsyncDocs {
             }
 
             if ($cache)
-                $this->chunks[$chunkName] = $this->getCache($chunkName, self::CHUNK_CACHE_PREFIX);
+                $this->chunks[$chunkId] = $this->getCache($chunkId, self::CHUNK_CACHE_PREFIX);
 
-            if (empty($this->chunks[$chunkName]) || empty($this->chunks[$chunkName]['content'])) {
-                $this->chunks[$chunkName] = array(
-                    'content' => $this->modx->parseChunk($chunkName, $chunkParams, '[+', '+]'),
+            if (empty($this->chunks[$chunkId]) || empty($this->chunks[$chunkId]['content'])) {
+                $this->chunks[$chunkId] = array(
+                    'id'      => $chunkId,
+                    'content' => $this->processOutput($this->modx->parseChunk($chunkName, $chunkParams, '[+', '+]')),
                     'cache'   => $cache,
                     'params'  => $chunkParams,
                 );
             }
 
-            $this->response['chunks'][$chunkName] = $this->chunks[$chunkName]['content'];
+            $this->response['chunks'][$chunkName] = $this->chunks[$chunkId]['content'];
 
-            if ($cache && $this->chunks[$chunkName]['content'])
-                $this->setCache($chunkName, $this->chunks[$chunkName], self::CHUNK_CACHE_PREFIX);
+            if ($cache && $this->chunks[$chunkId]['content'])
+                $this->setCache($chunkId, $this->chunks[$chunkName], self::CHUNK_CACHE_PREFIX);
         }
 
         return $this;
@@ -378,24 +422,27 @@ class AsyncDocs {
     }
 
     /**
-     * Loads document by reference
+     * Loads document by reference.
+     * Sets http status 500 on error.
      *
      * @return boolean
      */
     public function loadReferencedPage() {
-        $status = self::STATUS_MOVED_PERMANENTLY;
         if (is_numeric($this->modx->documentObject['content'])) {
             $docid = (int) $this->modx->documentObject['content'];
         } elseif (strpos($this->modx->documentObject['content'], '[~') !== false) {
             $docid = (int) preg_replace('/\D/', '', $this->modx->documentObject['content']);
+        } else { // external resource
+            $this->modx->sendRedirect($this->modx->documentObject['content'], 0, '', self::STATUS_MOVED_PERMANENTLY);
         }
 
         if (!empty($docid)) {
             $this->modx->documentIdentifier = $docid;
             $this->modx->documentMethod     = 'id';
-            return $this->loadDocument($status);
+            return $this->loadDocument(self::STATUS_MOVED_PERMANENTLY);
         } else {
-            header('HTTP/1.0 500 Internal Server Error');
+            $this->status = self::STATUS_INTERNAL_ERROR;
+            $this->_setResponseHeader();
             exit;
         }
     }
@@ -406,10 +453,11 @@ class AsyncDocs {
      * @return boolean
      */
     public function loadErrorPage() {
-        $docid  = (int) $this->modx->invokeEvent('OnPageNotFound', array('asyncDocs' => $this));
+        $res    = $this->invokeEvent('OnPageNotFound');
+        $docid  = array_pop($res);
         $status = self::STATUS_OK;
 
-        if (!$docid) {
+        if (!$docid || !is_numeric($docid)) {
             $docid  = (int) $this->modx->config['error_page'] ? $this->modx->config['error_page'] : $this->modx->config['site_start'];
             $status = self::STATUS_NOT_FOUND;
         }
@@ -425,9 +473,10 @@ class AsyncDocs {
     public function loadUnauthorizedPage() {
         $_REQUEST['refurl'] = $this->modx->documentIdentifier;
         $status             = self::STATUS_OK;
-        $docid              = (int) $this->modx->invokeEvent('OnPageUnauthorized', array('asyncDocs' => $this));
+        $res                = $this->invokeEvent('OnPageUnauthorized');
+        $docid              = array_pop($res);
 
-        if (!$docid) {
+        if (!$docid || !is_numeric($docid)) {
             $status = self::STATUS_UNAUTHORIZED;
             $docid  = (int) $this->modx->config['unauthorized_page'] ? $this->modx->config['unauthorized_page'] : ($this->modx->config['error_page'] ? $this->modx->config['error_page'] : $this->modx->config['site_start']);
         }
@@ -463,6 +512,7 @@ class AsyncDocs {
         $chunks = $this->getOption('excludeChunks', array());
 
         if (!empty($chunks)) {
+            array_walk($chunks, "preg_quote");
             $pattern                     = '/{{' . implode('}}|{{', $chunks) . '}}/';
             $this->modx->documentContent = preg_replace($pattern, '', $this->modx->documentContent);
         }
@@ -548,6 +598,12 @@ class AsyncDocs {
         return $this;
     }
 
+    /**
+     * Returns files list in directory $dir
+     * 
+     * @param string $dir
+     * @return array
+     */
     private function _getFiles($dir) {
         $files = array();
 
@@ -659,9 +715,83 @@ class AsyncDocs {
         }
 
         $this->extractContent();
-        $this->response['content'] = trim($this->modx->documentOutput, "\t\n\r\0\x0B ");
+
+        $this->modx->documentOutput = $this->processOutput($this->modx->documentOutput);
+        $this->response['content']  = $this->modx->documentOutput;
 
         return $this;
+    }
+
+    /**
+     * @param string $output
+     * @return string
+     */
+    public function processOutput($output) {
+        $output = trim($output, "\t\n\r\0\x0B ");
+        if ($this->getOption('minify', true))
+            $output = $this->minifyOutput($output);
+        return $output;
+    }
+
+    /**
+     * Minifies output html
+     * 
+     * @param string $output
+     * @return string
+     */
+    public function minifyOutput($output) {
+        include_once dirname(__FILE__) . '/minify/min/lib/Minify/HTML.php';
+        return Minify_HTML::minify($output);
+    }
+
+    /**
+     * Enter method for onPageNotFound event. Used for catch control before firing OnWebPageInit event to process plugins for custom urls
+     * 
+     * @return boolean Returns false if this is not ajax request
+     */
+    public function onPageNotFound() {
+        if (!$this->isAjax())
+            return false;
+
+        $this->loadErrorPage();
+
+        // preprare response
+        $this->prepareDocumentOutput()
+                ->addDocFields()
+                ->addChunks()
+                ->addSnippets()
+                ->addServiceData();
+
+        $this->saveDocumentCache();
+
+        $this->modx->invokeEvent('OnWebPageComplete', array('asyncDocs' => $this));
+
+        $this->_setSessionVars()
+                ->echoResponse();
+    }
+
+    /**
+     * Invokes plaugins on MODx event
+     * 
+     * @param string $evtName
+     * @param string $extParams
+     * @return array|boolean Array of event outputs or false
+     */
+    public function invokeEvent($evtName, $extParams = array()) {
+        if (!$evtName)
+            return false;
+
+        // remove async docs from pluginEvent array for current event to prevent infinit execution
+        array_shift($this->modx->pluginEvent[$evtName]);
+//        $first = array_shift($this->modx->pluginEvent[$evtName]);
+//        if (strtolower($first) !== $this->namespace) {
+//            $this->modx->logEvent(0, 2, 'AsyncDocs must be the first plugin in execution chain to process onPageNotFound Event', self::PLG_NAME);
+//            return false;
+//        }
+        // invoke other plugins of current event, determine landing doc id for custom urls
+        $res = $this->modx->invokeEvent($evtName, array_merge($extParams, array('asyncDocs' => $this)));
+        $this->modx->event->stopPropagation(); // stop propagation, other plugins already executed
+        return $res;
     }
 
     /**
