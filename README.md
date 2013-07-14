@@ -25,7 +25,9 @@ into the code field.
 - Check "OnWebPageInit" and "OnCacheUpdate" events at the System Events tab.
 
 - Optional:
+
     If you use some plugins for custom urls, then check "OnPageNotFound" event and set AsyncDocs the first in execution order for this event
+    
     If you want always minify page html check "OnWebPagePrerender" event
 
 - Copy/paste to the config field on the Config tab
@@ -37,11 +39,15 @@ into the code field.
 USAGE
 --------------------------------------------------------------------------
 Some preparations before use:
-    - Move the immutable part of a template in chunks (e. g: header and footer) and list these chunks in &excludeChunks option.
+- Move the immutable part of a template in chunks (e. g: header and footer) and list these chunks in &excludeChunks option.
+
 or
-    - Set the XPath to the content DOM element in &contentSelector option. This element will be extracted from document output.
+
+- Set the XPath to the content DOM element in &contentSelector option. This element will be extracted from document output.
+ 
 or if you want load clear content
-    - Set &contentOnly option to true
+
+- Set &contentOnly option to true
 
 Plugin options:
     
