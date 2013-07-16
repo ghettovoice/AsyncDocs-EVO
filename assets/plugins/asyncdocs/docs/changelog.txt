@@ -2,6 +2,10 @@ AsyncDocs plugin change log
 
 Author: Vladimir Vershinin
 =============================================================================
+1.1.1
+Fix:
+   * Some fixes on casting to right types
+
 1.1.0
 -----------------------------------------------------------------------------
 Features:
