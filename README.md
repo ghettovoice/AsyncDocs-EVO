@@ -14,7 +14,7 @@ Loads pages asynchronously.
 
 Used on http://mcinterior.ru/
 
-Current version: 1.1.1
+###Current version: 1.1.1
 
 INSTALLATION
 --------------------------------------------------------------------------
@@ -61,8 +61,8 @@ Plugin options:
     - &cache - Load and save document cache or not. Default: true. May be overridden per request by passing in request: asyncdocs_contentonly = true or false or 0 or 1
     - &minify - Minify output html of documents, chunks and snippets. If you check AsyncDocs fire on OnWebPagePrerender Event - it will minify page html
 
-To get page via ajax make an ajax request to url of the page that you need. To execute plugin you must add "asyncdocs: 1" to request fields or set
-request header: "X-AsyncDocs: AsyncDocs". 
+To get page via ajax make an ajax request to url of the page that you need. To execute plugin you must add `asyncdocs: 1` to request fields or set
+request header: `X-AsyncDocs: AsyncDocs`. 
 In response plugin set the HTTP Status code: 200 - OK, 301 - Moved for references, 401 - Unauthorized, 404 - Not found, so be careful to handle all this cases in you ajax callbacks.
 
 jQuery example request with field:
