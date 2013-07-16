@@ -86,17 +86,11 @@ class AsyncDocs {
      * @return \AsyncDocs
      */
     private function _prepareConfig() {
-        $this->config['fields']          = explode('||', $this->config['fields']);
-        $this->config['chunks']          = explode('||', $this->config['chunks']);
-        $this->config['snippets']        = explode('||', $this->config['snippets']);
-        $this->config['excludeChunks']   = explode('||', $this->config['excludeChunks']);
-        $this->config['excludeSnippets'] = explode('||', $this->config['excludeSnippets']);
-
-        array_walk($this->config['chunks'], "trim");
-        array_walk($this->config['snippets'], "trim");
-        array_walk($this->config['fields'], "trim");
-        array_walk($this->config ['excludeChunks'], "trim");
-        array_walk($this->config['excludeSnippets'], "trim");
+        $this->config['fields']          = array_map('trim', explode('||', $this->config['fields']));
+        $this->config['chunks']          = array_map('trim', explode('||', $this->config['chunks']));
+        $this->config['snippets']        = array_map('trim', explode('||', $this->config['snippets']));
+        $this->config['excludeChunks']   = array_map('trim', explode('||', $this->config['excludeChunks']));
+        $this->config['excludeSnippets'] = array_map('trim', explode('||', $this->config['excludeSnippets']));
 
         // options from  request
         $this->config['contentOnly'] = isset($_REQUEST[$this->namespace . '_contentonly']) ? filter_var($_REQUEST[$this->namespace . '_contentonly'], FILTER_VALIDATE_BOOLEAN) : $this->config['contentOnly'];
@@ -242,13 +236,13 @@ class AsyncDocs {
         $this->response['prevUrl']   = !empty($_SESSION[$this->namespace . '_prevUrl']) ? $_SESSION[$this->namespace . '_prevUrl'] : '';
 
         if ($this->response['prevId']) { // add tree direction and tree path
-            $parents     = array_reverse(array_values($parents));
-            $prevParents = array_reverse(array_values($this->modx->getParentIds($this->response['prevId'])));
+            $parents     = array_map('intval', array_reverse(array_values($parents)));
+            $prevParents = array_map('intval', array_reverse(array_values($this->modx->getParentIds($this->response['prevId']))));
 
-            array_push($parents, $this->modx->documentIdentifier);
+            array_push($parents, (int) $this->modx->documentIdentifier);
             array_unshift($parents, 0);
 
-            array_push($prevParents, $this->response['prevId']);
+            array_push($prevParents, (int) $this->response['prevId']);
             array_unshift($prevParents, 0);
 
             $pNum = count($prevParents);
