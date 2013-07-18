@@ -18,7 +18,7 @@ Used on http://mcinterior.ru/
 
 INSTALLATION
 --------------------------------------------------------------------------
-- Extract plugin archive to the root of your MODx site
+- Extract plugin archive or clone repository to the directory "MODxRoot/assets/plugins/asyncdocs"
 
 - Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of assets/plugins/AsyncDocs/plugin.txt
 into the code field.
