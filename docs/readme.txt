@@ -12,7 +12,7 @@ Used on http://mcinterior.ru/
 
 INSTALLATION
 --------------------------------------------------------------------------
-1. Extract plugin archive to the root of your MODx site
+1. Extract plugin archive or clone repository to the directory "MODxRoot/assets/plugins/asyncdocs"
 2. Create a new plugin in the manager called "AsyncDocs" and copy/paste the contents of plugin.txt
 into the code field.
 3. Check "OnWebPageInit" and "OnSiteRefresh" events at the System Events tab.
