@@ -14,13 +14,13 @@
 /**
  * System event:
  *   OnWebPageInit - load & parse documents
- *   OnSiteRefresh - clear cache of documents
+ *   OnCacheUpdate - clear cache of documents
  *   OnWebPagePrerender - minify document output
  *   OnPageNotFound - invoke onPageNotFound plugins for custom urls
  * 
  *
  * Configuration:
-  &Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &urlScheme=Document URL scheme;string; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
+  &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &urlScheme=Document URL scheme;string; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
  */
 /* @var $modx DocumentParser */
 /* @var $e SystemEvent */
@@ -47,7 +47,7 @@ switch ($e->name) {
     case 'OnWebPageInit':
         $asyncDocs->run();
         break;
-    case 'OnSiteRefresh':
+    case 'OnCacheUpdate':
         $asyncDocs->clearCache();
         break;
     case 'OnWebPagePrerender':
