@@ -786,7 +786,7 @@ class AsyncDocs
     }
 
     /**
-     * Invokes plaugins on MODx event
+     * Invokes plugins on MODx event
      *
      * @param string $evtName
      * @param array $extParams
