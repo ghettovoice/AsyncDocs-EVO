@@ -5,18 +5,19 @@
  *
  * Main class of AsyncDocs plugin.
  *
- * @author Vladimir Vershinin
- * @version 1.1.1
- * @package AsyncDocs
- * @license http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
+ * @author    Vladimir Vershinin
+ * @version   1.1.1
+ * @package   AsyncDocs
+ * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
  * @copyright (c) 2013, Vladimir Vershinin
  */
-class AsyncDocs {
+class AsyncDocs
+{
 
-    const PLG_NAME                 = 'AsyncDocs';
-    const VERSION                  = '1.0.0-beta';
-    const DOC_CACHE_PREFIX         = 'doc_';
-    const CHUNK_CACHE_PREFIX       = 'chunk_';
+    const PLG_NAME           = 'AsyncDocs';
+    const VERSION            = '1.0.0-beta';
+    const DOC_CACHE_PREFIX   = 'doc_';
+    const CHUNK_CACHE_PREFIX = 'chunk_';
     // statuses
     const STATUS_OK                = 200;
     const STATUS_MOVED_PERMANENTLY = 301;
@@ -55,20 +56,21 @@ class AsyncDocs {
             'excludeChunks'   => '',
             'excludeSnippets' => '',
             'urlScheme'       => '',
+            'setHeader'       => true,
             'contentOnly'     => false,
             'cache'           => true,
             'minify'          => true,
             'cacheDir'        => $this->modx->config['base_path'] . 'assets/cache/.asyncdocs/',
-                ), $config);
+        ), $config);
 
         $this->_prepareConfig()
-                ->_prepareCacheDirectories()
-                ->_prepareStatusCodes();
+            ->_prepareCacheDirectories()
+            ->_prepareStatusCodes();
     }
 
     /**
      * Sets status codes array
-     * 
+     *
      * @return \AsyncDocs
      */
     private function _prepareStatusCodes() {
@@ -79,6 +81,7 @@ class AsyncDocs {
             self::STATUS_NOT_FOUND         => 'HTTP/1.1 ' . self::STATUS_NOT_FOUND . ' Not Found',
             self::STATUS_INTERNAL_ERROR    => 'HTTP/1.1 ' . self::STATUS_INTERNAL_ERROR . ' Internal Server Error',
         );
+
         return $this;
     }
 
@@ -103,7 +106,8 @@ class AsyncDocs {
      * Returns config parameter by key
      *
      * @param string $key
-     * @param mixed $default
+     * @param mixed  $default
+     *
      * @return mixed
      */
     public function getOption($key, $default = null) {
@@ -129,6 +133,7 @@ class AsyncDocs {
                 $this->modx->logEvent(0, 3, 'Can\'t create cache folder', self::PLG_NAME);
             }
         }
+
         return $this;
     }
 
@@ -143,12 +148,11 @@ class AsyncDocs {
 
     /**
      * Main enter method
-     * 
-     * @return boolean Returns false if this is not ajax request
      */
     public function run() {
         if (!$this->isAjax()) {
             $this->_setSessionVars();
+
             return false;
         }
 
@@ -156,17 +160,17 @@ class AsyncDocs {
         $this->loadDocument();
         // preprare response
         $this->prepareDocumentOutput()
-                ->addDocFields()
-                ->addChunks()
-                ->addSnippets()
-                ->addServiceData();
+            ->addDocFields()
+            ->addChunks()
+            ->addSnippets()
+            ->addServiceData();
 
         $this->saveDocumentCache();
 
         $this->modx->invokeEvent('OnWebPageComplete', array('asyncDocs' => $this));
 
         $this->_setSessionVars()
-                ->echoResponse();
+            ->echoResponse();
     }
 
     /**
@@ -186,11 +190,12 @@ class AsyncDocs {
 
     /**
      * Sets HTTP header status code
-     * 
+     *
      * @return \AsyncDocs
      */
     private function _setResponseHeader() {
         header($this->statuses[$this->status]);
+
         return $this;
     }
 
@@ -201,19 +206,21 @@ class AsyncDocs {
      */
     private function _setSessionVars() {
         $_SESSION[$this->namespace . '_prevId']  = $this->modx->documentIdentifier;
-        $_SESSION[$this->namespace . '_prevIdx'] = (int) $this->modx->documentObject['menuindex'];
+        $_SESSION[$this->namespace . '_prevIdx'] = (int)$this->modx->documentObject['menuindex'];
 
         $parents                                 = $this->modx->getParentIds($this->modx->documentIdentifier);
         $_SESSION[$this->namespace . '_prevLvl'] = count($parents) + 1;
         $_SESSION[$this->namespace . '_prevUrl'] = $this->getDocUrl($this->modx->documentIdentifier);
+
         return $this;
     }
 
     public function getDocUrl($id) {
-        $id     = (int) $id;
+        $id     = (int)$id;
         $scheme = $this->getOption('urlScheme', '');
         $args   = http_build_query(array_diff_key($_GET, array_flip(array(self::PLG_NAME, $this->namespace, 'id', 'q'))));
-        return $id === (int) $this->modx->config['site_start'] ? ($scheme ? $this->modx->config['site_url'] : $this->modx->config['base_url']) : $this->modx->makeUrl($id, '', $args, $scheme);
+
+        return $id === (int)$this->modx->config['site_start'] ? ($scheme ? $this->modx->config['site_url'] : $this->modx->config['base_url']) : $this->modx->makeUrl($id, '', $args, $scheme);
     }
 
     /**
@@ -227,22 +234,22 @@ class AsyncDocs {
 
         $this->response['status']    = $this->status;
         $this->response['fromCache'] = !$this->modx->documentGenerated;
-        $this->response['id']        = (int) $this->modx->documentIdentifier;
-        $this->response['idx']       = (int) $this->modx->documentObject['menuindex'];
+        $this->response['id']        = (int)$this->modx->documentIdentifier;
+        $this->response['idx']       = (int)$this->modx->documentObject['menuindex'];
         $this->response['url']       = $this->getDocUrl($this->modx->documentIdentifier);
-        $this->response['prevId']    = !empty($_SESSION[$this->namespace . '_prevId']) && $_SESSION[$this->namespace . '_prevId'] !== $this->modx->documentIdentifier ? (int) $_SESSION[$this->namespace . '_prevId'] : 1;
-        $this->response['prevLvl']   = !empty($_SESSION[$this->namespace . '_prevLvl']) ? (int) $_SESSION[$this->namespace . '_prevLvl'] : 1;
-        $this->response['prevIdx']   = !empty($_SESSION[$this->namespace . '_prevIdx']) ? (int) $_SESSION[$this->namespace . '_prevIdx'] : 0;
+        $this->response['prevId']    = !empty($_SESSION[$this->namespace . '_prevId']) && $_SESSION[$this->namespace . '_prevId'] !== $this->modx->documentIdentifier ? (int)$_SESSION[$this->namespace . '_prevId'] : 1;
+        $this->response['prevLvl']   = !empty($_SESSION[$this->namespace . '_prevLvl']) ? (int)$_SESSION[$this->namespace . '_prevLvl'] : 1;
+        $this->response['prevIdx']   = !empty($_SESSION[$this->namespace . '_prevIdx']) ? (int)$_SESSION[$this->namespace . '_prevIdx'] : 0;
         $this->response['prevUrl']   = !empty($_SESSION[$this->namespace . '_prevUrl']) ? $_SESSION[$this->namespace . '_prevUrl'] : '';
 
         if ($this->response['prevId']) { // add tree direction and tree path
             $parents     = array_map('intval', array_reverse(array_values($parents)));
             $prevParents = array_map('intval', array_reverse(array_values($this->modx->getParentIds($this->response['prevId']))));
 
-            array_push($parents, (int) $this->modx->documentIdentifier);
+            array_push($parents, (int)$this->modx->documentIdentifier);
             array_unshift($parents, 0);
 
-            array_push($prevParents, (int) $this->response['prevId']);
+            array_push($prevParents, (int)$this->response['prevId']);
             array_unshift($prevParents, 0);
 
             $pNum = count($prevParents);
@@ -322,13 +329,13 @@ class AsyncDocs {
             if (empty($chunkStr))
                 continue;
 
-            $parts       = explode(':', $chunkStr);
+            $parts = explode(':', $chunkStr);
             array_walk($parts, "trim");
             $chunkName   = array_shift($parts);
             $chunkParams = array();
             $cache       = true;
 
-            $chunkId = (int) $this->modx->db->getValue("SELECT `id` FROM {$this->modx->getFullTableName('site_htmlsnippets')} WHERE `name` LIKE '$chunkName'");
+            $chunkId = (int)$this->modx->db->getValue("SELECT `id` FROM {$this->modx->getFullTableName('site_htmlsnippets')} WHERE `name` LIKE '$chunkName'");
             if (!$chunkId)
                 continue;
 
@@ -423,9 +430,9 @@ class AsyncDocs {
      */
     public function loadReferencedPage() {
         if (is_numeric($this->modx->documentObject['content'])) {
-            $docid = (int) $this->modx->documentObject['content'];
+            $docid = (int)$this->modx->documentObject['content'];
         } elseif (strpos($this->modx->documentObject['content'], '[~') !== false) {
-            $docid = (int) preg_replace('/\D/', '', $this->modx->documentObject['content']);
+            $docid = (int)preg_replace('/\D/', '', $this->modx->documentObject['content']);
         } else { // external resource
             $this->modx->sendRedirect($this->modx->documentObject['content'], 0, '', self::STATUS_MOVED_PERMANENTLY);
         }
@@ -433,6 +440,7 @@ class AsyncDocs {
         if (!empty($docid)) {
             $this->modx->documentIdentifier = $docid;
             $this->modx->documentMethod     = 'id';
+
             return $this->loadDocument(self::STATUS_MOVED_PERMANENTLY);
         } else {
             $this->status = self::STATUS_INTERNAL_ERROR;
@@ -452,7 +460,7 @@ class AsyncDocs {
         $status = self::STATUS_OK;
 
         if (!$docid || !is_numeric($docid)) {
-            $docid  = (int) $this->modx->config['error_page'] ? $this->modx->config['error_page'] : $this->modx->config['site_start'];
+            $docid  = (int)$this->modx->config['error_page'] ? $this->modx->config['error_page'] : $this->modx->config['site_start'];
             $status = self::STATUS_NOT_FOUND;
         }
 
@@ -472,7 +480,7 @@ class AsyncDocs {
 
         if (!$docid || !is_numeric($docid)) {
             $status = self::STATUS_UNAUTHORIZED;
-            $docid  = (int) $this->modx->config['unauthorized_page'] ? $this->modx->config['unauthorized_page'] : ($this->modx->config['error_page'] ? $this->modx->config['error_page'] : $this->modx->config['site_start']);
+            $docid  = (int)$this->modx->config['unauthorized_page'] ? $this->modx->config['unauthorized_page'] : ($this->modx->config['error_page'] ? $this->modx->config['error_page'] : $this->modx->config['site_start']);
         }
 
         return $this->loadForward($docid, $status);
@@ -483,6 +491,7 @@ class AsyncDocs {
      *
      * @param int $docid
      * @param int $status
+     *
      * @return boolean
      */
     public function loadForward($docid, $status = self::STATUS_OK) {
@@ -490,6 +499,7 @@ class AsyncDocs {
             --$this->modx->forwards;
             $this->modx->documentIdentifier = $docid;
             $this->modx->documentMethod     = 'id';
+
             return $this->loadDocument($status);
         } else {
             header('HTTP/1.0 500 Internal Server Error');
@@ -510,6 +520,7 @@ class AsyncDocs {
             $pattern                     = '/{{' . implode('}}|{{', $chunks) . '}}/';
             $this->modx->documentContent = preg_replace($pattern, '', $this->modx->documentContent);
         }
+
         return $this;
     }
 
@@ -523,8 +534,9 @@ class AsyncDocs {
         $snippets = $this->getOption('excludeSnippets', array());
 
         if (!empty($snippets)) {
-            
+
         }
+
         return $this;
     }
 
@@ -532,8 +544,9 @@ class AsyncDocs {
      * Sets value to cache by the key
      *
      * @param string $key
-     * @param mixed $value
+     * @param mixed  $value
      * @param string $prefix Prefix for cache file
+     *
      * @return \AsyncDocs
      */
     public function setCache($key, $value, $prefix = '') {
@@ -563,6 +576,7 @@ class AsyncDocs {
      *
      * @param string $key
      * @param string $prefix Prefix for cache file
+     *
      * @return mixed
      */
     public function getCache($key, $prefix = '') {
@@ -572,6 +586,7 @@ class AsyncDocs {
         if (file_exists($file) && is_file($file) && is_readable($file)) {
             $value = unserialize(file_get_contents($file));
         }
+
         return $value;
     }
 
@@ -589,13 +604,15 @@ class AsyncDocs {
                 @unlink($file);
             }
         }
+
         return $this;
     }
 
     /**
      * Returns files list in directory $dir
-     * 
+     *
      * @param string $dir
+     *
      * @return array
      */
     private function _getFiles($dir) {
@@ -634,7 +651,7 @@ class AsyncDocs {
             $documentContent = "[*content*]"; // use blank template
         else {
             $sql = "SELECT `content` FROM " . $this->modx->getFullTableName("site_templates") . " WHERE "
-                    . $this->modx->getFullTableName("site_templates") . ".`id` = '" . $this->modx->documentObject['template'] . "';";
+                . $this->modx->getFullTableName("site_templates") . ".`id` = '" . $this->modx->documentObject['template'] . "';";
 
             $result   = $this->modx->db->query($sql);
             $rowCount = $this->modx->db->getRecordCount($result);
@@ -679,7 +696,7 @@ class AsyncDocs {
 
         // remove all unused placeholders
         if (strpos($this->modx->documentOutput, '[+') > -1) {
-            $matches                    = array();
+            $matches = array();
             preg_match_all('~\[\+(.*?)\+\]~', $this->modx->documentOutput, $matches);
             if ($matches[0])
                 $this->modx->documentOutput = str_replace($matches[0], '', $this->modx->documentOutput);
@@ -718,30 +735,32 @@ class AsyncDocs {
 
     /**
      * @param string $output
+     *
      * @return string
      */
     public function processOutput($output) {
         $output = trim($output, "\t\n\r\0\x0B ");
         if ($this->getOption('minify', true))
             $output = $this->minifyOutput($output);
+
         return $output;
     }
 
     /**
      * Minifies output html
-     * 
+     *
      * @param string $output
+     *
      * @return string
      */
     public function minifyOutput($output) {
         include_once dirname(__FILE__) . '/minify/min/lib/Minify/HTML.php';
+
         return Minify_HTML::minify($output);
     }
 
     /**
      * Enter method for onPageNotFound event. Used for catch control before firing OnWebPageInit event to process plugins for custom urls
-     * 
-     * @return boolean Returns false if this is not ajax request
      */
     public function onPageNotFound() {
         if (!$this->isAjax())
@@ -751,24 +770,25 @@ class AsyncDocs {
 
         // preprare response
         $this->prepareDocumentOutput()
-                ->addDocFields()
-                ->addChunks()
-                ->addSnippets()
-                ->addServiceData();
+            ->addDocFields()
+            ->addChunks()
+            ->addSnippets()
+            ->addServiceData();
 
         $this->saveDocumentCache();
 
         $this->modx->invokeEvent('OnWebPageComplete', array('asyncDocs' => $this));
 
         $this->_setSessionVars()
-                ->echoResponse();
+            ->echoResponse();
     }
 
     /**
      * Invokes plaugins on MODx event
-     * 
+     *
      * @param string $evtName
      * @param string $extParams
+     *
      * @return array|boolean Array of event outputs or false
      */
     public function invokeEvent($evtName, $extParams = array()) {
@@ -819,11 +839,13 @@ class AsyncDocs {
      * Returns outer html of dom node
      *
      * @param DOMNode $node
+     *
      * @return string
      */
     public function outerHtml(DOMNode $node) {
         $doc = new DOMDocument('1.0', $this->modx->config['modx_charset']);
         $doc->appendChild($doc->importNode($node, true));
+
         return $doc->saveHTML();
     }
 
@@ -839,7 +861,7 @@ class AsyncDocs {
             // check page security
             if ($docObj['privateweb'] && isset($docObj['__MODxDocGroups__'])) {
                 $pass    = false;
-                $usrGrps = $this->getUserDocGroups();
+                $usrGrps = $this->modx->getUserDocGroups();
                 $docGrps = explode(",", $docObj['__MODxDocGroups__']);
                 // check is user has access to doc groups
                 if (is_array($usrGrps)) {
@@ -853,16 +875,18 @@ class AsyncDocs {
                 if (!$pass) {
                     if ($this->modx->config['unauthorized_page']) {
                         // check if file is not public
-                        $tbldg    = $this->modx->getFullTableName("document_groups");
-                        $secrs    = $this->modx->db->query("SELECT id FROM $tbldg WHERE document = '" . $this->modx->documentIdentifier . "' LIMIT 1;");
+                        $tbldg = $this->modx->getFullTableName("document_groups");
+                        $secrs = $this->modx->db->query("SELECT id FROM $tbldg WHERE document = '" . $this->modx->documentIdentifier . "' LIMIT 1;");
                         if ($secrs)
                             $seclimit = mysql_num_rows($secrs);
                     }
                     if ($seclimit > 0) {
                         $this->loadUnauthorizedPage();
+
                         return false;
                     } else {
                         $this->loadErrorPage();
+
                         return false;
                     }
                 }
@@ -897,6 +921,7 @@ class AsyncDocs {
 
             $this->setCache($this->modx->documentIdentifier, $this->modx->documentObject, self::DOC_CACHE_PREFIX);
         }
+
         return $this;
     }
 
