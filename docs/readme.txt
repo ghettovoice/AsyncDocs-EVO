@@ -20,7 +20,7 @@ into the code field.
     If you use some plugins for custom urls, then check "OnPageNotFound" event and set AsyncDocs the first in execution order for this event
     If you want always minify page html check "OnWebPagePrerender" event
 5. Copy/paste to the config field on the Config tab:
-    &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &urlScheme=Document URL scheme;string; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Mnify output;list;true,false;true&Configuration:=ajaxPageLoader;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &urlScheme=Document URL scheme;string; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
+    &Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &setHTTPCode=Set HTTP response codes;list;false,true;true &urlScheme=Document URL scheme;list;,full; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
 6. Set needed plugin options.
 
 USAGE
@@ -37,6 +37,7 @@ Plugin options:
     &fields - Document fields (list of doc fields to add to the response separated by "||")
     &chunks - Additional chunk (list of chunks to add to the response separated  by "||"). Record format: chunkName:prop1~val1:prop2~val2||chunkName2:prop1~val1. Chunk output cached by default, to disable caching - add as as property: cache~false or 0, i.e. chunkName:prop1~val1:prop2~val2:cache~false
     &excludeChunks - Exclude chunks (list of chunks to exclude from document content separated by "||")
+    &setHTTPCode - Set HTTP response codes
     &urlScheme - url scheme, passed to DocumentParser::makeUrl method. Default value: empty string - relative url
     &contentOnly - Return only content field of document without template process. Default: false. May be overridden per request by passing in request: asyncdocs_contentonly = true or false or 1 or 0
     &cache - Load and save document cache or not. Default: true. May be overridden per request by passing in request: asyncdocs_cache = true or false or 0 or 1
