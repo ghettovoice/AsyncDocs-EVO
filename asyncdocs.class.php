@@ -56,7 +56,7 @@ class AsyncDocs
             'excludeChunks'   => '',
             'excludeSnippets' => '',
             'urlScheme'       => '',
-            'setHeader'       => true,
+            'setHTTPCode'     => true,
             'contentOnly'     => false,
             'cache'           => true,
             'minify'          => true,
@@ -182,7 +182,7 @@ class AsyncDocs
         header("Pragma: no-cache");
         header('Content-type: application/json; charset=utf-8');
 
-        $this->_setResponseHeader();
+        $this->_setResponseHTTPCode();
 
         echo json_encode($this->getResponse());
         exit;
@@ -193,8 +193,9 @@ class AsyncDocs
      *
      * @return \AsyncDocs
      */
-    private function _setResponseHeader() {
-        header($this->statuses[$this->status]);
+    private function _setResponseHTTPCode() {
+        if ($this->config['setHTTPCode'])
+            header($this->statuses[$this->status]);
 
         return $this;
     }
@@ -377,6 +378,7 @@ class AsyncDocs
     /**
      * Loads document object
      *
+     * @param int $status
      * @return boolean
      */
     public function loadDocument($status = self::STATUS_OK) {
@@ -444,7 +446,7 @@ class AsyncDocs
             return $this->loadDocument(self::STATUS_MOVED_PERMANENTLY);
         } else {
             $this->status = self::STATUS_INTERNAL_ERROR;
-            $this->_setResponseHeader();
+            $this->_setResponseHTTPCode();
             exit;
         }
     }
@@ -787,7 +789,7 @@ class AsyncDocs
      * Invokes plaugins on MODx event
      *
      * @param string $evtName
-     * @param string $extParams
+     * @param array $extParams
      *
      * @return array|boolean Array of event outputs or false
      */

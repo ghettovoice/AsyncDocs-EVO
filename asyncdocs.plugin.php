@@ -20,7 +20,7 @@
  *
  *
  * Configuration:
-&Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &setHeader=Set HTTP response headers;list;false,true;true &urlScheme=Document URL scheme;list;,full; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
+&Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &setHTTPCode=Set HTTP response codes;list;false,true;true &urlScheme=Document URL scheme;list;,full; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
  */
 /* @var $modx DocumentParser */
 /* @var $e SystemEvent */
@@ -37,7 +37,7 @@ $params['snippets']        = isset($snippets) ? $snippets : '';
 $params['excludeChunks']   = isset($excludeChunks) ? $excludeChunks : '';
 $params['excludeSnippets'] = isset($excludeSnippets) ? $excludeSnippets : '';
 $params['urlScheme']       = isset($urlScheme) ? $urlScheme : '';
-$params['setHeader']       = isset($setHeader) ? filter_var($setHeader, FILTER_VALIDATE_BOOLEAN) : true;
+$params['setHTTPCode']     = isset($setHTTPCode) ? filter_var($setHTTPCode, FILTER_VALIDATE_BOOLEAN) : true;
 $params['contentOnly']     = isset($contentOnly) ? filter_var($contentOnly, FILTER_VALIDATE_BOOLEAN) : false;
 $params['cache']           = isset($cache) ? filter_var($cache, FILTER_VALIDATE_BOOLEAN) : true;
 $params['minify']          = isset($minify) ? filter_var($minify, FILTER_VALIDATE_BOOLEAN) : true;
