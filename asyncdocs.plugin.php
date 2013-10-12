@@ -20,7 +20,7 @@
  *
  *
  * Configuration:
-&Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &setHTTPCode=Set HTTP response codes;list;false,true;true &urlScheme=Document URL scheme;list;,full; &contentOnly=Return only content field of document;list;true,false;false &cache=Use cache;list;true,false;true &minify=Minify output;list;true,false;true
+&Configuration:=AsyncDocs;; &contentSelector=XPath to the content DOM element;string; &fields=Document fields;textarea;pagetitle||longtitle||description &chunks=List of additional chunks separated by "||";textarea; &excludeChunks=Exclude chunks list separated by "||";textarea; &setHTTPCode=Set HTTP response codes;list;false,true;true &urlScheme=Document URL scheme;list;,full; &contentOnly=Return only content field of document;list;false,true;false &cache=Use cache;list;false,true;true &minify=Minify output;list;false,true;true
  */
 /* @var $modx DocumentParser */
 /* @var $e SystemEvent */
