@@ -12,8 +12,6 @@ The plugin to ajaxify MODx site.
 
 Loads pages asynchronously.
 
-Used on http://mcinterior.ru/
-
 ###Current version: 1.1.2
 
 INSTALLATION
